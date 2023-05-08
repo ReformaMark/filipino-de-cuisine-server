@@ -23,6 +23,7 @@ app.use('/api', require('./routes/order'));
 app.use('/api', require('./routes/customerInfo'));
 app.use('/api', require('./routes/basketItem'));
 app.use('/api', require('./routes/message'));
+app.use('/api', require('./routes/reservation'));
 
 app.use((req, res, next) => {
   next(createError.NotFound());

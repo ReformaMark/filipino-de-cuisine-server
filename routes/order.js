@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 router.post('/order', async (req, res) => {
-  const { customerName, customerId, address, contactNumber, deliveryFee, paymentIntentId } = req.body;
+  const { customerName, customerId, address, contactNumber, deliveryFee, paymentIntentId, additionalNotes } = req.body;
 
   try {
     const basketItems = await prisma.basketItem.findMany({
@@ -30,6 +30,7 @@ router.post('/order', async (req, res) => {
             paymentIntentId,
             deliveryFee,
             deliveryStatus: 'Pending',
+            additionalNotes
           },
         },
       },
