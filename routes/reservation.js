@@ -3,69 +3,72 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { DateTime } = require('luxon');
 
-router.post('/booking', async (req, res) => {
-    const { selectedDate, selectedTimeslots,selectedTableSlots, customerId, additionalNotes, paymentIntentId } = req.body
-  
-   /*    const createReservation = await prisma.reservation.create({
-            data:{
-                customerId,
-                fee,
-                paymentStatus: "Fulfilled",
-                additionalNotes,
-                paymentIntentId,
-            }
-        })
-     */
-        try {
-            const data = selectedTableSlots.map((tableSlotId) => {
-             return selectedTimeslots.map((timeSlot) =>{
-                const endIsoDate = DateTime.fromISO(timeSlot, {
-                    setZone: true,
+    router.post('/booking', async (req, res) => {
+        const { selectedDate, selectedTimeslots,selectedTableSlots, customerId, additionalNotes, paymentIntentId } = req.body
+    
+            try {
+                const data = selectedTableSlots.map((tableSlotId) => {
+                return selectedTimeslots.map((timeSlot) =>{
+                    const endIsoDate = DateTime.fromISO(timeSlot, {
+                        setZone: true,
+                    })
+                    .plus({
+                        hour: 1,
+                    })
+                    .toISO()
+
+                    if(!endIsoDate) throw new Error("Computed invalid end time")
+
+                    return {
+                        startIsoDate: timeSlot,
+                        endIsoDate,
+                        reservationTableId: tableSlotId,
+                    }
+                }) 
                 })
-                .plus({
-                    hour: 1,
-                })
-                .toISO()
+                .flat(1)
 
-                if(!endIsoDate) throw new Error("Computed invalid end time")
-
-                return {
-                    startIsoDate: timeSlot,
-                    endIsoDate,
-                    reservationTableId: tableSlotId,
-                }
-             }) 
-            })
-            .flat(1)
-
-            const resevation = await prisma.reservation.create({
-                data: {
-                    customerId: customerId,
-                    paymentIntentId: paymentIntentId,
+                const reservationSelectedTables = selectedTableSlots.map(table => ({ table }));
+                const reservationSelectedTimes = selectedTimeslots.map(time => ({ time }));
+            
+                const reservation = await prisma.reservation.create({
+                  data: {
+                    customerId,
+                    paymentIntentId,
                     fee: 150,
                     selectedDate,
                     paymentStatus: "Fulfilled",
-                    additionalNotes: additionalNotes,
+                    additionalNotes,
                     reservationSlots: {
-                        createMany: {
+                      createMany: {
                         data,
-                        },
+                      },
                     },
-                },
-                include: {
+                    reservationSelectedTables: {
+                      createMany: {
+                        data: reservationSelectedTables,
+                      },
+                    },
+                    reservationSelectedTimes: {
+                      createMany: {
+                        data: reservationSelectedTimes,
+                      },
+                    },
+                  },
+                  include: {
                     reservationSlots: true,
-                    
-                }
-            })
-          
-          
-            res.json(resevation);
-          } catch (error) {
-            console.error(error);
-            res.status(500).send('Server Error');
-          }
-        
-  })
+                    reservationSelectedTables: true,
+                    reservationSelectedTimes: true,
+                  },
+                });
+
+                res.json(reservation);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send('Server Error');
+            }
+            
+    })
 
 
 router.get('/reservationSlot', async(req, res)=>{
@@ -141,5 +144,16 @@ router.put('/reservation/:id', async(req, res)=>{
     })
     res.json(updateReservationStatus)
 })
-  
+
+router.get('/reservationTable/:id', async(req, res)=>{
+    const {id} = req.params;
+
+    const getReservationTable = await prisma.reservationSelectedTable.findMany({
+        where:{
+            reservationId: parseInt(id),
+        }
+    })
+
+    res.json(getReservationTable)
+})
 module.exports = router;

@@ -47,6 +47,25 @@ router.put('/customerInfo/:id', async(req,res) =>{
   }
 });
 
+router.put('/customerInfo/:id/account', async(req,res) =>{
+  const { id } = req.params;
+  const {  defaultAddress, defaultContactNumber } = req.body;
+  try {
+
+    const updateCustomerInfo = await prisma.customerInfo.update({
+      where: { id: id },
+      data: {
+        defaultAddress: defaultAddress,
+        defaultContactNumber: defaultContactNumber,
+      },
+    });
+
+    res.status(200).json(updateCustomerInfo);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to update customer info' });
+  }
+});
 router.get('/customerInfo/:id', async (req, res, next) => {
     const { id } = req.params;
   

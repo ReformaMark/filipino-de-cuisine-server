@@ -156,4 +156,26 @@ router.get('/orderItem', async (req, res, next) => {
       res.status(500).json({ message: 'Error getting order items.' });
     }
   });
+
+
+  router.get('/most-ordered-item', async (req, res) => {
+    try {
+      const mostOrderedItems = await prisma.menuItem.findMany({
+        include: {
+          orderItems: true,
+        },
+        orderBy: {
+          orderItems: {
+            _count: 'desc',
+          },
+        },
+        take: 1,
+      });
+  
+      res.json(mostOrderedItems);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 module.exports = router;

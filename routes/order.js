@@ -144,4 +144,20 @@ router.put('/order/:orderId/onlineOrder' , async(req, res)=>{
   })
   res.send(updateOnlineOrderStatus)
 })
+router.put('/order/:orderId/received' , async(req, res)=>{
+  const {orderId} = req.params;
+
+  const updateOnlineOrderStatus = await prisma.onlineOrder.update({
+    where:{
+    id: parseInt(orderId),
+    },
+    data:{
+      deliveryStatus: 'Received'
+    },
+    include:{
+      order: true,
+    }
+  })
+  res.send(updateOnlineOrderStatus)
+})
 module.exports = router;
